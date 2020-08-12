@@ -2,6 +2,7 @@ import { MongoClient, Db } from 'mongodb';
 import url from 'url';
 
 // Create cached connection variable
+let cachedClient: MongoClient | undefined;
 let cachedDb: Db | undefined;
 
 // A function for connecting to MongoDB,
@@ -9,7 +10,8 @@ let cachedDb: Db | undefined;
 export async function getDatabase(uri = process.env.DATABASE_URL): Promise<Db> {
   // If the database connection is cached,
   // use it instead of creating a new connection
-  if (cachedDb) {
+  if (cachedDb && cachedClient) {
+    console.log(cachedClient.isConnected());
     return cachedDb;
   }
 
@@ -31,9 +33,10 @@ export async function getDatabase(uri = process.env.DATABASE_URL): Promise<Db> {
     throw new Error('Unable to derive a dbName to connect to');
   }
 
-  const db = await client.db(dbName);
+  const db = client.db(dbName);
 
   // Cache the database connection and return the connection
+  cachedClient = client;
   cachedDb = db;
   return db;
 }
